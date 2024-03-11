@@ -1,3 +1,9 @@
+library(tidyverse)
+library(geobr)
+
+
+#Análise com tabela pré-formatada de dados de deslocamentos para escola 
+
 deslocamentos_escola %>%
   select(-Total)%>%
   rename(local = Local) %>%
@@ -125,5 +131,29 @@ dados_grafico %>%
     x= "",
     y=""
   )
+
+
+mapa_df<- geobr::read_neighborhood(year = 2010)
+
+mapa_df<- geobr::read_metro_area()
+
+#Análise com microdados
+
+PDAD_2021_Moradores %>%
+  filter(!(i20 %in% c(77777, 88888, 99999) )) %>%
+  summarise( media_podenderada = weighted.mean(i20,peso_mor),
+            .by = a01ra) %>%
+  arrange(desc(media_podenderada)) %>%
+  inner_join(nomes_regioes_administrativas)
+
+
+
+PDAD_2021_Moradores %>%
+  filter(!(i10 %in% c( 88888, 99999) )) %>%
+  summarise( quantidade = sum(peso_mor),
+             .by = c(a01ra,i10) ) %>%
+  arrange(desc(quantidade)) %>%
+  inner_join(nomes_regioes_administrativas)
+
 
 
