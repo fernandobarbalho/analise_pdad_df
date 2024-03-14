@@ -1,7 +1,9 @@
 library(readxl)
 library(readr)
-deslocamentos_escola <- read_excel("Relatorio_DF_percentual-2021.xlsx", 
-                                   sheet = "A47", skip = 1, n_max=34)
+library(tidyverse)
+
+#deslocamentos_escola <- read_excel("Relatorio_DF_percentual-2021.xlsx", 
+#                                   sheet = "A47", skip = 1, n_max=34)
 
 
 PDAD_2021_Domicilios <- read_delim("PDAD_2021-Domicilios.csv", 
@@ -30,7 +32,6 @@ nomes_regioes_administrativas <-
   rename(a01ra = valor,
          nome_regiao_administrativa = descricao_do_valor)
 
-names(nomes_regioes_administrativas) <- 
 
 
 dicionario_de_variaveis_pdad_2021 %>%

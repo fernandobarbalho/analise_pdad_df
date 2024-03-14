@@ -32,7 +32,7 @@ perc_pop_ra<-
 PDAD_2021_Moradores|>
   summarise( perc_pop = (sum(peso_mor) /soma_pesos)*100 ,
             .by=c(a01ra)) %>%
-  arrange(a01ra)
+  arrange(desc(perc_pop))
 
 
 
@@ -40,7 +40,7 @@ perc_pop_ra_s_peso<-
   PDAD_2021_Moradores|>
   summarise( perc_pop = (n()/NROW(PDAD_2021_Moradores))*100 ,
              .by=c(a01ra)) %>%
-  arrange(a01ra)
+  arrange(desc(perc_pop))
 
 
 

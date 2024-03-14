@@ -1,3 +1,5 @@
+library(ordinal)
+
 #laboratório de reamostragem
 
  replicate(3,amostra_trabalho[1,])
@@ -165,3 +167,44 @@ chisq.test(as.factor(amostra_expandida_1400$a01ra), as.factor(amostra_expandida_
 
 teste_destino<-
 chisq.test(as.factor(amostra_expandida_1400$a01ra), as.factor(amostra_expandida_1400$i08), simulate.p.value = TRUE)
+
+
+amostra_expandida_1400$i10 <- factor(amostra_expandida_1400$i10, ordered = TRUE)
+
+modelo <- clm(i10 ~ idade + as.factor(e04) + as.factor(e06) +as.factor(e07) + as.factor(e05) + as.factor(i08) + renda_ind_r,
+              data = amostra_expandida_1400)
+
+
+modelo<- clm(as.factor(i10) ~ idade + as.factor(e04) + as.factor(e06) +as.factor(e07) + as.factor(e05) + as.factor(i08) + renda_ind_r,
+              weights = peso_mor, data = PDAD_2021_Moradores)
+
+
+library(rpart)
+library(rpart.plot)
+
+
+
+amostra_expandida_1400$i10 <- as.factor(amostra_expandida_1400$i10)
+amostra_expandida_1400$e04 <- as.factor(amostra_expandida_1400$e04)
+amostra_expandida_1400$e06 <- as.factor(amostra_expandida_1400$e06)
+amostra_expandida_1400$e07 <- as.factor(amostra_expandida_1400$e07)
+amostra_expandida_1400$e05 <- as.factor(amostra_expandida_1400$e05)
+amostra_expandida_1400$i08 <- as.factor(amostra_expandida_1400$i08)
+
+dados_treino<- 
+  amostra_expandida_1400 %>%
+  slice_sample(prop = 0.1)
+
+
+modelo_arvore <- rpart(as.factor(i10) ~ idade + as.factor(e04) + as.factor(e06) + as.factor(e07) + as.factor(e05) + as.factor(i08) + renda_ind_r,
+                       data = dados_treino,
+                       method = "class",
+                       control = rpart.control(maxdepth = 4, minsplit = 20, cp = 0.01, minbucket = 10))
+
+
+modelo_arvore_renda <- rpart(as.factor(i10) ~  renda_ind_r,
+                       data = dados_treino)
+
+rpart.plot(modelo_arvore_renda)
+
+
