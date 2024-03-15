@@ -1,4 +1,12 @@
 library(ordinal)
+library(tidyverse)
+library(caret)
+
+library(rattle)
+library(rpart)
+library(rpart.plot)
+
+
 
 #laboratório de reamostragem
 
@@ -144,7 +152,8 @@ set.seed(2)
 amostra_trabalho_1400<-
   PDAD_2021_Moradores%>%
   slice_sample(n=1400) %>%
-  select(a01ra, idade, e04, e06, e07, e05, i08, i10 ,  renda_ind_r, peso_mor ) #I10 é a variável independente
+  mutate(mesma_regiao = ifelse(a01ra==i08,1,0)) %>%
+  select(a01ra, idade, e04, e06, e07, e05, i08, i10 ,i09_8,  renda_ind_r, peso_mor, mesma_regiao ) #I10 é a variável independente
 
 
 #Construção da amostra expandida de acordo com o peso
@@ -162,49 +171,82 @@ amostra_expandida_1400 %>%
   arrange(desc(prop_populacao))
 
 
+dados_teste_chi_quadrado<-
+  amostra_expandida_1400 %>%
+  filter(!i10%in%c(88888,99999))
+
 teste_tempo<-
-chisq.test(as.factor(amostra_expandida_1400$a01ra), as.factor(amostra_expandida_1400$i10), simulate.p.value = TRUE)
+chisq.test(as.factor(dados_teste_chi_quadrado$a01ra), as.factor(dados_teste_chi_quadrado$i10), simulate.p.value = TRUE)
 
 teste_destino<-
-chisq.test(as.factor(amostra_expandida_1400$a01ra), as.factor(amostra_expandida_1400$i08), simulate.p.value = TRUE)
+chisq.test(as.factor(dados_teste_chi_quadrado$a01ra), as.factor(dados_teste_chi_quadrado$i08), simulate.p.value = TRUE)
 
 
-amostra_expandida_1400$i10 <- factor(amostra_expandida_1400$i10, ordered = TRUE)
-
-modelo <- clm(i10 ~ idade + as.factor(e04) + as.factor(e06) +as.factor(e07) + as.factor(e05) + as.factor(i08) + renda_ind_r,
-              data = amostra_expandida_1400)
+teste_cor<-
+  chisq.test(as.factor(dados_teste_chi_quadrado$e06), as.factor(dados_teste_chi_quadrado$i10), simulate.p.value = TRUE)
 
 
-modelo<- clm(as.factor(i10) ~ idade + as.factor(e04) + as.factor(e06) +as.factor(e07) + as.factor(e05) + as.factor(i08) + renda_ind_r,
-              weights = peso_mor, data = PDAD_2021_Moradores)
+teste_meio_transporte<-
+  chisq.test(as.factor(dados_teste_chi_quadrado$i09_8), as.factor(dados_teste_chi_quadrado$i10), simulate.p.value = TRUE)
 
 
-library(rpart)
-library(rpart.plot)
+teste_mesma_regiao<-
+  chisq.test(as.factor(dados_teste_chi_quadrado$mesma_regiao), as.factor(dados_teste_chi_quadrado$i10), simulate.p.value = TRUE)
+
+teste_sexo<-
+  chisq.test(as.factor(dados_teste_chi_quadrado$e04), as.factor(dados_teste_chi_quadrado$i10), simulate.p.value = TRUE)
 
 
 
-amostra_expandida_1400$i10 <- as.factor(amostra_expandida_1400$i10)
-amostra_expandida_1400$e04 <- as.factor(amostra_expandida_1400$e04)
-amostra_expandida_1400$e06 <- as.factor(amostra_expandida_1400$e06)
-amostra_expandida_1400$e07 <- as.factor(amostra_expandida_1400$e07)
-amostra_expandida_1400$e05 <- as.factor(amostra_expandida_1400$e05)
-amostra_expandida_1400$i08 <- as.factor(amostra_expandida_1400$i08)
+gera_modelo <- function(.data, seed=1972, pesos=FALSE, a_prop){
+  set.seed(seed)
+  dados_treino<- 
+    .data %>%
+    filter(!(i10%in%c('88888','99999')),
+           !is.na(renda_ind_r)) %>%
+    slice_sample(prop = a_prop)
+  
+  if (pesos){
+    pesos_parm = dados_treino$peso_mor
+  } else{
+    pesos_parm = NULL
+  }
 
-dados_treino<- 
-  amostra_expandida_1400 %>%
-  slice_sample(prop = 0.1)
+  
+  
+  dados_treino$i10 <- as.factor(dados_treino$i10)
+  dados_treino$e04 <- as.factor(dados_treino$e04)
+  dados_treino$e06 <- as.factor(dados_treino$e06)
+  dados_treino$e07 <- as.factor(dados_treino$e07)
+  dados_treino$e05 <- as.factor(dados_treino$e05)
+  dados_treino$i08 <- as.factor(dados_treino$i08)
+  dados_treino$a01ra <- as.factor(dados_treino$a01ra)
+  dados_treino$i09_8 <- as.factor(dados_treino$i09_8)
+  dados_treino$mesma_regiao <- as.factor(dados_treino$mesma_regiao)
+  
+  
+  # Create model with ramdom parameters
+  control_dt <- trainControl(method="cv")
+  seed <- 1972
+  set.seed(seed)
+  
+  
+  #Modelo sem peso 
+  
+  dt_model <- train(i10 ~  renda_ind_r + a01ra +i09_8 +mesma_regiao +e04 , data=dados_treino, method="rpart", weights = pesos_parm,  trControl=control_dt)
+  
+  dt_model
+
+}
 
 
-modelo_arvore <- rpart(as.factor(i10) ~ idade + as.factor(e04) + as.factor(e06) + as.factor(e07) + as.factor(e05) + as.factor(i08) + renda_ind_r,
-                       data = dados_treino,
-                       method = "class",
-                       control = rpart.control(maxdepth = 4, minsplit = 20, cp = 0.01, minbucket = 10))
+modelo_amostra<- gera_modelo(amostra_expandida_1400, a_prop = 0.7)
+
+fancyRpartPlot(modelo_amostra$finalModel)
 
 
-modelo_arvore_renda <- rpart(as.factor(i10) ~  renda_ind_r,
-                       data = dados_treino)
 
-rpart.plot(modelo_arvore_renda)
+modelo_microdados_70<- gera_modelo(PDAD_2021_Moradores, pesos = TRUE,  a_prop = 0.7)
 
+fancyRpartPlot(modelo_microdados_70$finalModel)
 
