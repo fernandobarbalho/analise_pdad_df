@@ -147,7 +147,7 @@ PDAD_2021_Moradores %>%
   inner_join(nomes_regioes_administrativas)
 
 
-
+tempo_por_ra<-
 PDAD_2021_Moradores %>%
   filter(!(i10 %in% c( 88888, 99999) )) %>%
   summarise( quantidade = sum(peso_mor),
@@ -155,5 +155,27 @@ PDAD_2021_Moradores %>%
   arrange(desc(quantidade)) %>%
   inner_join(nomes_regioes_administrativas)
 
+
+total_cor_raca<-
+  PDAD_2021_Moradores%>%
+  summarise(total = sum(peso_mor),
+            .by = e06)
+
+
+total_cor_raca_deslocamento<-
+  PDAD_2021_Moradores%>%
+  filter(!(i10 %in% c(99999) )) %>%
+  summarise(total = sum(peso_mor),
+            .by = e06)
+
+tempo_por_cor_raca<-
+PDAD_2021_Moradores %>%
+  filter(!(i10 %in% c(99999) )) %>%
+  summarise( quantidade = sum(peso_mor),
+             .by = c(i10,e06) ) %>%
+  ungroup() %>%
+  inner_join(total_cor_raca_deslocamento) %>%
+  mutate(proporcao = (quantidade / total)*100)
+  arrange(desc(proporcao))
 
 
