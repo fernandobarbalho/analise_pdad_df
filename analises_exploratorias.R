@@ -189,7 +189,7 @@ validos_amostra<-
 validos_microdados<-
   (PDAD_2021_Moradores %>%
      filter(!i10%in%c(88888,99999)) %>%
-     summarise(total = n()))$total
+     summarise(total = sum(peso_mor)))$total
 
     
 amostra_expandida_1400 %>%
@@ -203,7 +203,7 @@ amostra_expandida_1400 %>%
 PDAD_2021_Moradores %>%
   filter(!i10%in%c(88888,99999)) %>%
   mutate(i10 =as.factor(i10)) %>%
-  summarise(proporcao = (n()/validos_microdados)*100,
+  summarise(proporcao = (sum(peso_mor)/validos_microdados)*100,
             .by = i10) %>%
   arrange(desc(proporcao))
 
@@ -214,6 +214,57 @@ PDAD_2021_Moradores %>%
   ggplot(aes(x=populacao, y=a01ra)) +
   geom_col()
   
+
+####Análises com renda
+
+
+amostra_expandida_1400 %>%
+  filter(!i10%in%c(88888,99999),
+         !is.na(renda_ind_r)) %>%
+  mutate(i10 =as.factor(i10),
+         tipo_renda = ifelse(renda_ind_r >=3508,"renda maior que corte", "renda menor que corte"  )) %>%
+  ggplot() +
+  geom_bar(aes(y=i10, fill= tipo_renda), position = "fill")
+
+amostra_expandida_1400 %>%
+  filter(!i10%in%c(88888,99999),
+         !is.na(renda_ind_r)) %>%
+  mutate(i10 =as.factor(i10),
+         tipo_renda = ifelse(renda_ind_r >=3508,"renda maior que corte", "renda menor que corte"  )) %>%
+  ggplot() +
+  geom_bar(aes(y=i10, fill= tipo_renda))
+
+
+amostra_expandida_1400 %>%
+  filter(!i10%in%c(88888,99999),
+         !is.na(renda_ind_r)) %>%
+  mutate(i10 =as.factor(i10),
+         tipo_renda = ifelse(renda_ind_r >=3508,"renda maior que corte", "renda menor que corte"  )) %>%
+  summarise(quantidade = sum(peso_mor),
+            .by = c(i10, tipo_renda)) %>%
+  ggplot() +
+  geom_col(aes(y=i10, x=quantidade, fill= tipo_renda))
+
+
+PDAD_2021_Moradores %>%
+  filter(!i10%in%c(88888,99999),
+         !is.na(renda_ind_r)) %>%
+  mutate(i10 =as.factor(i10),
+         tipo_renda = ifelse(renda_ind_r >=4584,"renda maior que corte", "renda menor que corte"  )) %>%
+  summarise(quantidade = sum(peso_mor),
+            .by = c(i10, tipo_renda)) %>%
+  ggplot() +
+  geom_col(aes(y=i10, x=quantidade, fill= tipo_renda), position = "fill")
+
+PDAD_2021_Moradores %>%
+  filter(!i10%in%c(88888,99999),
+         !is.na(renda_ind_r)) %>%
+  mutate(i10 =as.factor(i10),
+         tipo_renda = ifelse(renda_ind_r >=4584,"renda maior que corte", "renda menor que corte"  )) %>%
+  summarise(quantidade = sum(peso_mor),
+            .by = c(i10, tipo_renda)) %>%
+  ggplot() +
+  geom_col(aes(y=i10, x=quantidade, fill= tipo_renda))
 
 
 amostra_expandida_1400 %>%
@@ -256,6 +307,31 @@ amostra_expandida_1400 %>%
   facet_wrap(i10~.)
 
 
+####Análise por mesma região
+
+amostra_expandida_1400 %>%
+  filter(!i10%in%c(88888,99999)) %>%
+  mutate(i10 =as.factor(i10),
+         mesma_regiao = as.factor(mesma_regiao)) %>%
+  ggplot() +
+  geom_bar(aes(y=i10, fill= mesma_regiao )) +
+  facet_wrap(i09_8~.)
+
+
+PDAD_2021_Moradores %>%
+  mutate(mesma_regiao = ifelse(a01ra==i08,1,0)) %>%
+  filter(!i10%in%c(88888,99999)) %>%
+  mutate(i10 =as.factor(i10),
+         mesma_regiao = as.factor(mesma_regiao)) %>%
+  summarise(quantidade = sum(peso_mor),
+            .by = c(i10, mesma_regiao,i09_8)) %>%
+  ggplot() +
+  geom_col(aes(y=i10, x=quantidade,fill= mesma_regiao)  ) +
+  facet_wrap(i09_8~.)
+
+
+
+
 amostra_expandida_1400 %>%
   filter(!i10%in%c(88888,99999)) %>%
   mutate(i10 =as.factor(i10),
@@ -264,16 +340,6 @@ amostra_expandida_1400 %>%
   geom_bar(aes(y=a01ra, fill= i10), position = "fill") 
 
 
-
-amostra_expandida_1400 %>%
-  filter(!i10%in%c(88888,99999),
-         !is.na(renda_ind_r)) %>%
-  mutate(i10 =as.factor(i10),
-         i09_8 = as.factor(i09_8),
-         tipo_renda = ifelse(renda_ind_r >=3508,"renda maior que corte", "renda menor que corte"  )) %>%
-  ggplot() +
-  geom_bar(aes(y=i10, fill= tipo_renda )) +
-  facet_wrap(i09_8~.)
 
 
 

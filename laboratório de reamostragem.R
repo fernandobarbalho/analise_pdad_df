@@ -3,8 +3,6 @@ library(tidyverse)
 library(caret)
 
 library(rattle)
-library(rpart)
-library(rpart.plot)
 
 
 
@@ -212,7 +210,9 @@ gera_modelo <- function(.data, seed=1972, pesos=FALSE, a_prop){
     pesos_parm = NULL
   }
 
-  
+  dados_treino<-
+  dados_treino %>%
+    mutate(mesma_regiao = ifelse(a01ra==i08,1,0))  
   
   dados_treino$i10 <- as.factor(dados_treino$i10)
   dados_treino$e04 <- as.factor(dados_treino$e04)
@@ -231,9 +231,12 @@ gera_modelo <- function(.data, seed=1972, pesos=FALSE, a_prop){
   set.seed(seed)
   
   
-  #Modelo sem peso 
-  
-  dt_model <- train(i10 ~  renda_ind_r + a01ra +i09_8 +mesma_regiao +e04 , data=dados_treino, method="rpart", weights = pesos_parm,  trControl=control_dt)
+
+  dt_model <- train(i10 ~  renda_ind_r+ a01ra +i09_8 +mesma_regiao +e04,
+                    data=dados_treino, 
+                    method="rpart", 
+                    weights = pesos_parm,  
+                    trControl=control_dt)
   
   dt_model
 
