@@ -1,0 +1,125 @@
+---
+title: "storytelling pdad"
+output: html_document
+date: "2024-03-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE,message = FALSE)
+library(tidyverse)
+library(caret)
+library(rattle)
+library(readxl)
+
+PDAD_2021_Moradores <- read_delim("PDAD_2021-Moradores.csv", 
+                                  delim = ";", escape_double = FALSE, locale = locale(decimal_mark = ",", 
+                                                                                      grouping_mark = "."), trim_ws = TRUE)
+
+PDAD_2021_Moradores <- janitor::clean_names(PDAD_2021_Moradores)
+
+nomes_regioes_administrativas <- read_excel("dicionario_de_variaveis_pdad_2021.xlsx", 
+                                                sheet = "anexo_1")
+
+nomes_regioes_administrativas <-
+  nomes_regioes_administrativas %>%
+  janitor::clean_names() %>%
+  select(valor, descricao_do_valor) %>%
+  rename(a01ra = valor,
+         nome_regiao_administrativa = descricao_do_valor)
+
+tempos_trabalho<-  
+  read_excel("dicionario_de_variaveis_pdad_2021.xlsx", 
+                                                sheet = "moradores", skip = 534,n_max = 11, col_names = FALSE) %>%
+  select(3,4) 
+  
+names(tempos_trabalho)<- c("i10","tempo_deslocamento")
+
+
+
+```
+
+
+```{r cars}
+#Gráfico da distribuição dos tempos para o trabalho
+
+peso_total_valido<- 
+  (PDAD_2021_Moradores %>%
+  filter(!i10%in% c("88888","99999")) %>%
+  summarise(pop_total = sum(peso_mor)))$pop_total
+
+PDAD_2021_Moradores%>%
+  filter(!i10%in% c("88888","99999")) %>%
+  summarise(proporcao_valido = ((round(sum(peso_mor),0))/peso_total_valido)*100,
+            .by = i10) %>%
+  inner_join(tempos_trabalho) %>%
+  arrange(i10) %>%
+  mutate(tempo_deslocamento = reorder(tempo_deslocamento, desc(i10)),
+         proporcao_valido = round(proporcao_valido,1)) %>%
+  ggplot(aes(x=proporcao_valido, y=tempo_deslocamento)) +
+  geom_col()+
+  geom_text(aes(label=paste0(proporcao_valido,"%")),
+            hjust = c(rep(1,5),rep(-0.1,4)), color = c(rep("white",5),rep("black",4)))+
+  theme_light()+
+  theme(panel.grid = element_blank(),
+        axis.text.x = element_blank()) +
+  labs(
+    title = "Tempos de deslocamento para trabalho no DF",
+    subtitle = "Referência: 2021",
+    caption = "Fonte: IPE-DF. Elaboração própria",
+    x="",
+    y=""
+  )
+  
+
+```
+
+
+
+```{r}
+#Gráfico da distribuição dos tempos para o trabalho por região administrativa
+
+
+
+peso_area_valido<- 
+  PDAD_2021_Moradores %>%
+  filter(!i10%in% c("88888","99999")) %>%
+  summarise(pop_area_valido = sum(peso_mor),
+            .by = a01ra)
+
+dados_grafico<-
+PDAD_2021_Moradores%>%
+  filter(!i10%in% c("88888","99999")) %>%
+  inner_join(nomes_regioes_administrativas) %>%
+  summarise(soma_valido = round(sum(peso_mor),0),
+            .by = c(i10,nome_regiao_administrativa,a01ra )) %>%
+  ungroup() %>%
+  mutate(nome_regiao_administrativa = reorder(nome_regiao_administrativa, soma_valido)) %>%
+  inner_join(peso_area_valido) %>%
+  summarise(proporcao_valido = (soma_valido/pop_area_valido)*100,
+            .by = c(i10,nome_regiao_administrativa )) %>%
+  ungroup() %>%
+  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(proporcao_valido = round(proporcao_valido,1)) %>%
+  summarise(proporcao_valido = sum(proporcao_valido),
+            .by= c(tempos_deslocamento, nome_regiao_administrativa)) %>%
+  ungroup() %>%
+  arrange(nome_regiao_administrativa)
+
+dados_grafico %>% 
+  ggplot(aes(x=proporcao_valido, y=nome_regiao_administrativa)) +
+  geom_col(aes(fill=tempos_deslocamento), position = "fill")+
+  geom_vline(xintercept = 0.5, linetype = "dashed") +
+  theme_light()+
+  theme(panel.grid = element_blank()) +
+  labs(
+    title = "Tempos de deslocamento para trabalho no DF",
+    subtitle = "Referência: 2021",
+    caption = "Fonte: IPE-DF. Elaboração própria",
+    x="",
+    y=""
+  ) 
+
+            
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
