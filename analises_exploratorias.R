@@ -147,6 +147,14 @@ PDAD_2021_Moradores %>%
   inner_join(nomes_regioes_administrativas)
 
 
+PDAD_2021_Moradores %>%
+  #filter(!(renda_ind_r %in% c(77777, 88888, 99999) )) %>%
+  summarise( media_podenderada = weighted.mean(renda_ind_r,peso_mor, na.rm = TRUE),
+             .by = a01ra) %>%
+  arrange(desc(media_podenderada)) %>%
+  inner_join(nomes_regioes_administrativas)
+
+
 tempo_por_ra<-
 PDAD_2021_Moradores %>%
   filter(!(i10 %in% c( 88888, 99999) )) %>%

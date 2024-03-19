@@ -33,6 +33,18 @@ nomes_regioes_administrativas <-
          nome_regiao_administrativa = descricao_do_valor)
 
 
+nomes_destinos <- read_excel("dicionario_de_variaveis_pdad_2021.xlsx", 
+                                            sheet = "anexo_12")
+
+nomes_destinos <-
+  nomes_destinos %>%
+  janitor::clean_names() %>%
+  select(valor, descricao_do_valor) %>%
+  rename(i08 = valor,
+         nome_destino = descricao_do_valor)
+
+
+
 
 dicionario_de_variaveis_pdad_2021 %>%
   filter(!is.na(coluna)) %>%

@@ -197,6 +197,7 @@ teste_sexo<-
 
 
 gera_modelo <- function(.data, seed=1972, pesos=FALSE, a_prop){
+  
   set.seed(seed)
   dados_treino<- 
     .data %>%
@@ -212,7 +213,8 @@ gera_modelo <- function(.data, seed=1972, pesos=FALSE, a_prop){
 
   dados_treino<-
   dados_treino %>%
-    mutate(mesma_regiao = ifelse(a01ra==i08,1,0))  
+    mutate(mesma_regiao = ifelse(a01ra==i08,1,0),
+           tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos"))  
   
   dados_treino$i10 <- as.factor(dados_treino$i10)
   dados_treino$e04 <- as.factor(dados_treino$e04)
@@ -232,7 +234,7 @@ gera_modelo <- function(.data, seed=1972, pesos=FALSE, a_prop){
   
   
 
-  dt_model <- train(i10 ~  renda_ind_r+ a01ra +i09_8 +mesma_regiao +e04,
+  dt_model <- train(tempos_deslocamento ~  renda_ind_r+ a01ra +i09_8 + i08  +e04 ,
                     data=dados_treino, 
                     method="rpart", 
                     weights = pesos_parm,  
