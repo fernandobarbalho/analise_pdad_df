@@ -1,5 +1,5 @@
 ---
-title: "storytelling pdad"
+title: "storytelling pdad - deslocamento unidades de ensino"
 output: html_document
 date: "2024-03-18"
 ---
@@ -36,7 +36,7 @@ nomes_destinos <-
   nomes_destinos %>%
   janitor::clean_names() %>%
   select(valor, descricao_do_valor) %>%
-  rename(i08 = valor,
+  rename(h04 = valor,
          nome_destino = descricao_do_valor)
 
 
@@ -47,14 +47,14 @@ tempos_unidade_ensino<-
                                                 sheet = "moradores", skip = 325,n_max =11, col_names = FALSE) %>%
   select(3,4) 
 
-names(tempos_unidade_ensino)<- c("i10","tempo_deslocamento")
+names(tempos_unidade_ensino)<- c("h06","tempo_deslocamento")
 
 meios_transporte<-
   read_excel("dicionario_de_variaveis_pdad_2021.xlsx", 
-                                                sheet = "moradores", skip = 525,n_max = 9, col_names = FALSE) %>%
+                                                sheet = "moradores", skip = 314,n_max = 9, col_names = FALSE) %>%
   select(3,4) 
 
-names(meios_transporte)<- c("i09_8","meio_transporte")  
+names(meios_transporte)<- c("h05_10","meio_transporte")  
 
   
 
@@ -64,30 +64,32 @@ names(meios_transporte)<- c("i09_8","meio_transporte")
 
 
 ```{r cars}
-#Gráfico da distribuição dos tempos para o unidade_ensino
+#Gráfico da distribuição dos tempos para o UE
 
 peso_total_valido<- 
   (PDAD_2021_Moradores %>%
-  filter(!i10%in% c("88888","99999")) %>%
+  filter(!h06%in% c("88888","99999")) %>%
   summarise(pop_total = sum(peso_mor)))$pop_total
 
 PDAD_2021_Moradores%>%
-  filter(!i10%in% c("88888","99999")) %>%
+  filter(!h06%in% c("88888","99999")) %>%
   summarise(proporcao_valido = ((round(sum(peso_mor),0))/peso_total_valido)*100,
-            .by = i10) %>%
+            .by = h06) %>%
   inner_join(tempos_unidade_ensino) %>%
-  arrange(i10) %>%
-  mutate(tempo_deslocamento = reorder(tempo_deslocamento, desc(i10)),
+  arrange(h06) %>%
+  mutate(tempo_deslocamento = reorder(tempo_deslocamento, desc(h06)),
          proporcao_valido = round(proporcao_valido,1)) %>%
   ggplot(aes(x=proporcao_valido, y=tempo_deslocamento)) +
   geom_col()+
   geom_text(aes(label=paste0(proporcao_valido,"%")),
-            hjust = c(rep(1,5),rep(-0.1,4)), color = c(rep("white",5),rep("black",4)))+
+            hjust = c(rep(1,4),rep(-0.1,5)), 
+            color = c(rep("white",4),rep("black",5)),
+            size =3)+
   theme_light()+
   theme(panel.grid = element_blank(),
         axis.text.x = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF",
+    title = "Tempos de deslocamento para UE no DF",
     subtitle = "Referência: 2021",
     caption = "Fonte: IPE-DF. Elaboração própria",
     x="",
@@ -104,9 +106,9 @@ PDAD_2021_Moradores%>%
 
 
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
             .by = c(tempos_deslocamento, mesma_regiao)) %>%
   ggplot(aes(y=mesma_regiao, x=proporcao)) +
@@ -115,7 +117,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF",
+    title = "Tempos de deslocamento para UE no DF",
     subtitle = "Referência: 2021",
     caption = "Fonte: IPE-DF. Elaboração própria",
     x="Proporção do total deslocamentos (%)",
@@ -134,19 +136,19 @@ PDAD_2021_Moradores %>%
 
 peso_total_valido_mesma_regiao<- 
   (PDAD_2021_Moradores %>%
-     filter(!i10%in% c("88888","99999")) %>%
-     mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
+     filter(!h06%in% c("88888","99999")) %>%
+     mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
      filter(mesma_regiao == "sim") %>%
      summarise(pop_total = sum(peso_mor)))$pop_total
 
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(meios_transporte) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
             .by = c(tempos_deslocamento, meio_transporte, mesma_regiao)) %>%
-  mutate(meio_transporte = ifelse(meio_transporte == "Transporte Privado (empresa de aplicativo, táxi, fornecido pela empresa)", 
+  mutate(meio_transporte = ifelse(meio_transporte == "Privado (empresa de aplicativo, táxi etc)", 
                                   "Transporte Privado", 
                                   meio_transporte)) %>%
   mutate(meio_transporte = fct_reorder(meio_transporte, proporcao, sum)) %>%
@@ -156,7 +158,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF",
+    title = "Tempos de deslocamento para UE no DF",
     subtitle = "Meios de transporte/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%) ",
@@ -170,15 +172,15 @@ PDAD_2021_Moradores %>%
 
 ```
 
-```{r fig.width=10}
+```{r}
 #Deslocamentos na mesma região e regiões administrativas
 
 
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
   #filter(mesma_regiao == "sim") %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(nomes_regioes_administrativas) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
             .by = c(tempos_deslocamento, nome_regiao_administrativa, mesma_regiao)) %>%
@@ -189,7 +191,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF",
+    title = "Tempos de deslocamento para UE no DF",
     subtitle = "Regiões administrativas/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -207,10 +209,10 @@ PDAD_2021_Moradores %>%
 
 
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08|i08==0 ,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04|h04==0 ,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
   filter(!(i20 %in% c(77777, 88888, 99999) )) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   summarise( media_podenderada = weighted.mean(i20, na.rm = TRUE),
              .by = c( tempos_deslocamento)) %>%
   arrange(desc(media_podenderada)) %>%
@@ -220,7 +222,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF",
+    title = "Tempos de deslocamento para UE no DF",
     subtitle = "Análise por renda",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x= "Média ponderada da última remuneração em (R$)",
@@ -235,12 +237,12 @@ PDAD_2021_Moradores %>%
 ```{r}
 
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
   #filter(mesma_regiao == "sim") %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(meios_transporte) %>%
-  filter(i09_8 == 7) %>%
+  filter(h05_10 == 9) %>%
   inner_join(nomes_regioes_administrativas) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
             .by = c(tempos_deslocamento, nome_regiao_administrativa, mesma_regiao)) %>%
@@ -251,7 +253,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: a pé",
+    title = "Tempos de deslocamento para UE no DF: a pé",
     subtitle = "Regiões administrativas/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -265,11 +267,11 @@ PDAD_2021_Moradores %>%
 
 ```{r}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(meios_transporte) %>%
-  filter(i09_8 %in% c(2)) %>%
+  filter(h05_10 %in% c(5)) %>%
   inner_join(nomes_regioes_administrativas) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
             .by = c( tempos_deslocamento, nome_regiao_administrativa, mesma_regiao)) %>%
@@ -280,7 +282,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: automóvel",
+    title = "Tempos de deslocamento para UE no DF: automóvel",
     subtitle = "Regiões administrativas/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -295,11 +297,11 @@ PDAD_2021_Moradores %>%
 
 ```{r}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(meios_transporte) %>%
-  filter(i09_8 %in% c(1)) %>%
+  filter(h05_10 %in% c(1)) %>%
   inner_join(nomes_regioes_administrativas) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
             .by = c( tempos_deslocamento, nome_regiao_administrativa, mesma_regiao)) %>%
@@ -310,7 +312,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: ônibus",
+    title = "Tempos de deslocamento para UE no DF: ônibus",
     subtitle = "Regiões administrativas/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -324,11 +326,11 @@ PDAD_2021_Moradores %>%
 
 ```{r}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(meios_transporte) %>%
-  mutate(meio_transporte = ifelse(meio_transporte == "Transporte Privado (empresa de aplicativo, táxi, fornecido pela empresa)", 
+  mutate(meio_transporte = ifelse(meio_transporte == "Privado (empresa de aplicativo, táxi etc)", 
                                   "Transporte Privado", 
                                   meio_transporte)) %>%
   inner_join(nomes_regioes_administrativas) %>%
@@ -342,7 +344,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: Sudoeste e Octogonal",
+    title = "Tempos de deslocamento para UE no DF: Sudoeste e Octogonal",
     subtitle = "Meio de transporte/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -354,9 +356,9 @@ PDAD_2021_Moradores %>%
 
 ```{r fig.width=8}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(nomes_destinos) %>%
   filter(a01ra == 22) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
@@ -368,7 +370,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: Sudoeste e Octogonal",
+    title = "Tempos de deslocamento para UE no DF: Sudoeste e Octogonal",
     subtitle = "Destinos",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -382,11 +384,11 @@ PDAD_2021_Moradores %>%
 
 ```{r}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(meios_transporte) %>%
-  mutate(meio_transporte = ifelse(meio_transporte == "Transporte Privado (empresa de aplicativo, táxi, fornecido pela empresa)", 
+  mutate(meio_transporte = ifelse(meio_transporte == "Privado (empresa de aplicativo, táxi etc)", 
                                   "Transporte Privado", 
                                   meio_transporte)) %>%
   inner_join(nomes_regioes_administrativas) %>%
@@ -400,7 +402,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: Plano Piloto",
+    title = "Tempos de deslocamento para UE no DF: Plano Piloto",
     subtitle = "Meio de transporte/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -413,11 +415,11 @@ PDAD_2021_Moradores %>%
 
 ```{r}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(meios_transporte) %>%
-  mutate(meio_transporte = ifelse(meio_transporte == "Transporte Privado (empresa de aplicativo, táxi, fornecido pela empresa)", 
+  mutate(meio_transporte = ifelse(meio_transporte == "Privado (empresa de aplicativo, táxi etc)", 
                                   "Transporte Privado", 
                                   meio_transporte)) %>%
   inner_join(nomes_regioes_administrativas) %>%
@@ -431,7 +433,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: Ceilândia",
+    title = "Tempos de deslocamento para UE no DF: Ceilândia",
     subtitle = "Meio de transporte/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -443,9 +445,9 @@ PDAD_2021_Moradores %>%
 
 ```{r}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(nomes_destinos) %>%
   filter(a01ra == 9) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
@@ -457,7 +459,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: Ceilândia",
+    title = "Tempos de deslocamento para UE no DF: Ceilândia",
     subtitle = "Destinos",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -470,11 +472,11 @@ PDAD_2021_Moradores %>%
 
 ```{r}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(meios_transporte) %>%
-  mutate(meio_transporte = ifelse(meio_transporte == "Transporte Privado (empresa de aplicativo, táxi, fornecido pela empresa)", 
+  mutate(meio_transporte = ifelse(meio_transporte == "Privado (empresa de aplicativo, táxi etc)", 
                                   "Transporte Privado", 
                                   meio_transporte)) %>%
   inner_join(nomes_regioes_administrativas) %>%
@@ -488,7 +490,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: Brazlândia",
+    title = "Tempos de deslocamento para UE no DF: Brazlândia",
     subtitle = "Meio de transporte/mesma região (s/n)",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -500,9 +502,9 @@ PDAD_2021_Moradores %>%
 
 ```{r}
 PDAD_2021_Moradores %>%
-  mutate(mesma_regiao = ifelse(a01ra==i08,"sim","não")) %>%
-  filter(!i10%in%c(88888,99999)) %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   inner_join(nomes_destinos) %>%
   filter(a01ra == 4) %>%
   summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
@@ -514,7 +516,7 @@ PDAD_2021_Moradores %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF: Brazlândia",
+    title = "Tempos de deslocamento para UE no DF: Brazlândia",
     subtitle = "Destinos",
     caption = "Fonte: IPE-DF. Dados de 2021. Elaboração própria",
     x="Proporção do total de deslocamentos (%)",
@@ -525,29 +527,29 @@ PDAD_2021_Moradores %>%
 
 
 ```{r fig.height=8}
-#Gráfico da distribuição dos tempos para o unidade_ensino por região administrativa
+#Gráfico da distribuição dos tempos para o UE por região administrativa
 
 
 
 peso_area_valido<- 
   PDAD_2021_Moradores %>%
-  filter(!i10%in% c("88888","99999")) %>%
+  filter(!h06%in% c("88888","99999")) %>%
   summarise(pop_area_valido = sum(peso_mor),
             .by = a01ra)
 
 dados_grafico_1<-
 PDAD_2021_Moradores%>%
-  filter(!i10%in% c("88888","99999")) %>%
+  filter(!h06%in% c("88888","99999")) %>%
   inner_join(nomes_regioes_administrativas) %>%
   mutate(nome_regiao_administrativa = fct_reorder(nome_regiao_administrativa, peso_mor,sum)) %>%
   summarise(soma_valido = round(sum(peso_mor),0),
-            .by = c(i10,nome_regiao_administrativa,a01ra )) %>%
+            .by = c(h06,nome_regiao_administrativa,a01ra )) %>%
   ungroup() %>%
   inner_join(peso_area_valido) %>%
   summarise(proporcao_valido = (soma_valido/pop_area_valido)*100,
-            .by = c(i10,nome_regiao_administrativa )) %>%
+            .by = c(h06,nome_regiao_administrativa )) %>%
   ungroup() %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   mutate(proporcao_valido = round(proporcao_valido,1)) %>%
   summarise(proporcao_valido = sum(proporcao_valido),
             .by= c(tempos_deslocamento, nome_regiao_administrativa)) %>%
@@ -561,16 +563,16 @@ PDAD_2021_Moradores%>%
 
 dados_grafico_2<-
 PDAD_2021_Moradores%>%
-  filter(!i10%in% c("88888","99999")) %>%
+  filter(!h06%in% c("88888","99999")) %>%
   inner_join(nomes_regioes_administrativas) %>%
   mutate(nome_regiao_administrativa = fct_reorder(nome_regiao_administrativa, peso_mor,sum)) %>%
   summarise(soma_valido = round(sum(peso_mor),0),
-            .by = c(i10,nome_regiao_administrativa,a01ra )) %>%
+            .by = c(h06,nome_regiao_administrativa,a01ra )) %>%
   ungroup() %>%
   summarise(proporcao_valido = (soma_valido/peso_total_valido)*100,
-            .by = c(i10,nome_regiao_administrativa )) %>%
+            .by = c(h06,nome_regiao_administrativa )) %>%
   ungroup() %>%
-  mutate(tempos_deslocamento = ifelse(i10<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
   mutate(proporcao_valido = round(proporcao_valido,1)) %>%
   summarise(proporcao_valido = sum(proporcao_valido),
             .by= c(tempos_deslocamento, nome_regiao_administrativa)) %>%
@@ -586,7 +588,7 @@ dados_grafico_1 %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF",
+    title = "Tempos de deslocamento para UE no DF",
     subtitle = "Referência: 2021",
     caption = "Fonte: IPE-DF. Elaboração própria",
     x="",
@@ -601,7 +603,7 @@ dados_grafico_2 %>%
   theme_light()+
   theme(panel.grid = element_blank()) +
   labs(
-    title = "Tempos de deslocamento para unidade_ensino no DF",
+    title = "Tempos de deslocamento para UE no DF",
     subtitle = "Referência: 2021",
     caption = "Fonte: IPE-DF. Elaboração própria",
     x="",
