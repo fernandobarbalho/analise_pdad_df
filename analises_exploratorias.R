@@ -383,3 +383,41 @@ amostra_expandida_1400 %>%
   facet_wrap(i10~.)
 
 
+
+
+###########################
+
+PDAD_2021_Moradores %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
+            .by = c(tempos_deslocamento, mesma_regiao)) 
+
+fab<-
+PDAD_2021_Moradores %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  inner_join(meios_transporte) %>%
+  summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
+            .by = c(tempos_deslocamento, meio_transporte, mesma_regiao)) %>%
+  mutate(meio_transporte = ifelse(meio_transporte == "Privado (empresa de aplicativo, táxi etc)", 
+                                  "Transporte Privado", 
+                                  meio_transporte)) %>%
+  mutate(meio_transporte = fct_reorder(meio_transporte, proporcao, sum))
+
+fab%>%
+  filter(str_detect(meio_transporte, "Escolar")) %>%
+  summarise(sum(proporcao))
+
+PDAD_2021_Moradores %>%
+  mutate(mesma_regiao = ifelse(a01ra==h04,"sim","não")) %>%
+  filter(!h06%in%c(88888,99999)) %>%
+  #filter(mesma_regiao == "sim") %>%
+  mutate(tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos")) %>%
+  inner_join(nomes_regioes_administrativas) %>%
+  summarise(proporcao = round((sum(peso_mor)/peso_total_valido)*100,1)  ,
+            .by = c(tempos_deslocamento, nome_regiao_administrativa, mesma_regiao)) %>%
+  mutate(nome_regiao_administrativa = fct_reorder(nome_regiao_administrativa, proporcao, sum))
+

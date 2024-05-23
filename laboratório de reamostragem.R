@@ -255,3 +255,60 @@ modelo_microdados_70<- gera_modelo(PDAD_2021_Moradores, pesos = TRUE,  a_prop = 
 
 fancyRpartPlot(modelo_microdados_70$finalModel)
 
+
+
+gera_modelo_ue <- function(.data, seed=1972, pesos=FALSE, a_prop){
+  
+  set.seed(seed)
+  dados_treino<- 
+    .data %>%
+    filter(!(i10%in%c('88888','99999'))) %>%
+    slice_sample(prop = a_prop)
+  
+  if (pesos){
+    pesos_parm = dados_treino$peso_mor
+  } else{
+    pesos_parm = NULL
+  }
+  
+  dados_treino<-
+    dados_treino %>%
+    mutate(mesma_regiao = ifelse(a01ra==h04,1,0),
+           tempos_deslocamento = ifelse(h06<=2,"Até 30 minutos","Acima de 30 minutos"))  
+  
+  dados_treino$i10 <- as.factor(dados_treino$i10)
+  dados_treino$e04 <- as.factor(dados_treino$e04)
+  dados_treino$e06 <- as.factor(dados_treino$e06)
+  dados_treino$e07 <- as.factor(dados_treino$e07)
+  dados_treino$e05 <- as.factor(dados_treino$e05)
+  dados_treino$h04 <- as.factor(dados_treino$h04)
+  dados_treino$a01ra <- as.factor(dados_treino$a01ra)
+  dados_treino$h05_10 <- as.factor(dados_treino$h05_10)
+  
+  
+  
+  dados_treino$mesma_regiao <- as.factor(dados_treino$mesma_regiao)
+  
+  
+  # Create model with ramdom parameters
+  control_dt <- trainControl(method="cv")
+  seed <- 1972
+  set.seed(seed)
+  
+  
+  
+  dt_model <- train(tempos_deslocamento ~ mesma_regiao+ a01ra + h05_10,
+                    data=dados_treino, 
+                    method="rpart", 
+                    weights = pesos_parm,  
+                    trControl=control_dt)
+  
+  dt_model
+  
+}
+
+
+
+modelo_microdados_70_ue<- gera_modelo_ue(PDAD_2021_Moradores, pesos = TRUE,  a_prop = 0.7)
+
+fancyRpartPlot(modelo_microdados_70_ue$finalModel)
